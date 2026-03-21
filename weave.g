@@ -284,7 +284,7 @@ FindCycleLengths := function ( n )
         tgrp := CubeTranslationGroup(n);
 	tele := Elements(tgrp);
         cc := ConjugacyClasses( rgrp );
-        cc := [List( cc, c -> Representative(c) )[4]];
+        cc := List( cc, c -> Representative(c) );
         res := [];
 
         Print( List(cc, Order ), "\n");
@@ -441,7 +441,7 @@ TestPropb := function( n )
                  if IsEvenInt(n) then
 	
                          if IsEvenInt(m) and n/2 mod m = 0 then
-                                 Add(res, [cya(m), n^2 * Phi(2*m)]); 
+                                 Add(res, [cya(m), 2*n^2 * Phi(m)]); 
                          elif n/2 mod m = 0 then
                                  Add(res, [cya(m), 7*n^2/4*Phi(m)]);
                          fi;
@@ -472,7 +472,7 @@ TestTell:=function(n,l)
     cgrp := CubeRotationGroup(n);
     cc := ConjugacyClasses(cgrp);
     cc := List( cc, c->Representative(c));;
-    sigma := cc[3];
+    sigma := cc[4];
 
     tgrp := CubeTranslationGroup(n);
     tgrp := Elements(tgrp);;
@@ -486,13 +486,13 @@ TestTell:=function(n,l)
 	  fi;
     od;
 
-    if IsEvenInt(n) then
-	tl:=n^2/2*Gcd(l,n);
-    else
-	tl:=n^2*Gcd(l,n);
-    fi;
+##    if IsEvenInt(n) then
+##	tl:=n^2/2*Gcd(l,n);
+##    else
+##	tl:=n^2*Gcd(l,n);
+##    fi;
 ##return res;
-    return [tl,Length(res)];
+    return res;
 end;
 
 
@@ -519,7 +519,120 @@ end;
 
 
 
+TestProp4 := function( n )
+
+    local d, m, res, cya, cyb;
+    res := [];
+
+        
+    if IsEvenInt(n) then
+        n2:=n/2;
+        if IsEvenInt(n2) then
+            d :=DivisorsInt(n2/2);
+            
+            for m in d do 
+
+                if not IsEvenInt(m) then
+                    Add(res, [[[2*m, 2*n/m ],[4*m, (n^3-4*n)/(4*m) ]],n^2/2*Phi(m)] );
+                    Add(res, [[[m,2*n/m],[2*m, n/m ],[4*m, (n^3-4*n)/(4*m) ]],n^2/2*Phi(m)] );
+                fi;
+
+                if IsEvenInt(m) then
+                    Add(res, [[[4*m, n^3/(4*m)]],4*n^2*Phi(m)]);
+                else
+                    Add(res, [[[4*m, n^3/(4*m)]],3*n^2*Phi(m)]);
+                fi;
+            od;
+         else
+            d :=DivisorsInt(n2);
+            for m in d do 
+                Add(res, [[[2*m, 2*n/m ],[4*m, (n^3-4*n)/(4*m) ]],n^2/2*Phi(m)] );
+                Add(res, [[[m,2*n/m],[2*m, n/m ],[4*m, (n^3-4*n)/(4*m) ]],n^2/2*Phi(m)] );
+                Add(res, [[[4*m, n^3/(4*m)]],n^2*Phi(m)]);
+
+            od;
+         fi;
+
+    else
+    
+        d := DivisorsInt(n);
+        for m in d do
+             Add(res,[[[m,n/m],[4*m,(n^3-n)/(4*m)]],n^2*Phi(m)]);
+         od;
+    fi;
+
+    return Set(res);
+end;
 
 
+TestFour := function( n )
+         local cgrp, tgrp, cc, sigma, tele, sigT;
+
+         cgrp := CubeRotationGroup(n);
+         tgrp := CubeTranslationGroup(n);
+         cc := ConjugacyClasses(cgrp);
+         cc := List( cc, c->Representative(c));;
+         sigma:=cc[4];
+         tele := Elements(tgrp);;
+         sigT := List(tele, i-> sigma * i );;
+         return
+         Collected(List( sigT, x-> Collected(CycleLengths(x,[1..n^3]))));
+
+end;
+
+
+
+JT:=function(m)
+    local g,primes,p;
+    primes:=PrimeDivisors(m);
+    primes:=List(primes,p->1-1/p^3);
+    return m^3*Product(primes);
+end; 
+
+numberOfOrbits:=function(n)
+    local g,sums,t1,t2,m,sum2;
+    if IsOddInt(n) and (n mod 3) <> 0 then 
+        sums:=[0,0];
+        sum2:=0;
+        for m in DivisorsInt(n) do
+            t1:=(n*(3*n^2+1))/(2*m);
+            sums[1]:=sums[1]+Phi(m)*2^t1;
+            sum2:=sum2+JT(m)*8^(n^3/m);
+            if (m mod 3) <> 0 then
+                t2:=n^3/m;
+                sums[2]:=sums[2]+Phi(m)*2^t2;
+            fi;
+        od;
+    elif IsOddInt(n) and (n mod 3) = 0 then
+        sums:=[0,0];
+        sum2:=0;
+        for m in DivisorsInt(n) do
+            sum2:=sum2+JT(m)*8^(n^3/m);
+            t1:=(n*(3*n^2+1))/(2*m);
+            sums[1]:=sums[1]+Phi(m)*2^t1;
+            t2:=n^3/m;
+            sums[2]:=sums[2]+Phi(m)*2^t2;
+        od;
+    else
+        sums:=[0,0,0,0,0,0];
+        sum2:=0;
+        for m in DivisorsInt(n) do
+            sum2:=sum2+JT(m)*8^(n^3/m);
+             if IsEvenInt(m) and n/2 mod m =0 then 
+		sums[1]:=sums[1]-(Phi(m)/4)*8^(n^3/(2*m));
+                sums[6]:=sums[6]+Gcd(4,n)*Phi(m)*8^(n^3/(4*m));
+             fi;
+             sums[2]:=sums[2]+(9/4)*Phi(m)*8^(n^3/(2*m));
+             if IsOddInt(m) then 
+		sums[3]:=sums[3]+1/2*Phi(m)*4^(2*n/m)*8^((n*(n^2-4))/(2*m));
+                sums[5]:=sums[5]-Phi(m)*8^(n^3/(4*m));
+             fi;
+             if m mod 3 <> 0 then 
+		sums[4]:=sums[4]+Phi(m)*2^(n^3/m);
+             fi;
+        od;
+    fi;
+    return 1/(24*n^3)*(sum2+n^2*Sum(sums));
+end;
 
 
