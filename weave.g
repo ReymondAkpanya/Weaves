@@ -468,7 +468,6 @@ TestTell:=function(n,l)
     local tgrp,i,tl,t,temp,res,cgrp,cc,sigT,sigma,cyclen;
    
 
-
     cgrp := CubeRotationGroup(n);
     cc := ConjugacyClasses(cgrp);
     cc := List( cc, c->Representative(c));;
@@ -505,18 +504,35 @@ Test2:=function(n,l)
     cgrp := CubeRotationGroup(n);
     cc := ConjugacyClasses(cgrp);
     cc := List( cc, c->Representative(c));;
-    sigma := cc[3];
+    Print(List(cc,Order),"\n");
+    sigma := cc[l];
 
     tgrp := CubeTranslationGroup(n);
     tgrp := Elements(tgrp);;
     res :=[];
     for t in tgrp do
         sigT:=sigma*t;
-	  Add(res,Order(sigT));  
+	Add(res,Order(sigT));  
     od;
-    return Set(res);
+    return Collected(res);
 end;
 
+
+TestAll := function( n, l )
+         local cgrp, tgrp, cc, sigma, tele, sigT;
+         
+         cgrp := CubeRotationGroup(n);
+         tgrp := CubeTranslationGroup(n);
+         cc := ConjugacyClasses(cgrp);
+         cc := List( cc, c->Representative(c));;
+         Print(List(cc,Order),"\n");
+         sigma:=cc[l];
+         tele := Elements(tgrp);;
+         sigT := List(tele, i-> sigma * i );;
+         return
+         Collected(List( sigT, x-> Collected(CycleLengths(x,[1..n^3]))));
+
+end;
 
 
 TestProp4 := function( n )
@@ -636,3 +652,23 @@ numberOfOrbits:=function(n)
 end;
 
 
+
+number2:=function(n)
+    local m,sums;
+    m:=1;
+    sums:=List([1..10],i->0);
+    sums[1]:=sums[1]+JT(m)*n^3/m;
+    if IsEvenInt(n) then 
+        sums[2]:=sums[2]+2*n/m * n^2/2*Phi(m);
+        sums[3]:=sums[3]+4*n/m * n^2/2*Phi(m);
+        sums[4]:=sums[4]+ n/m*n^2*Phi(m);
+        sums[5]:=sums[5]+ 4*n/m *n^2/2*Phi(m);
+    else
+        sums[2]:=sums[2]+n/m*n^2*Phi(m);
+        sums[3]:=sums[3]+n/m*n^2*Phi(m);
+        sums[4]:=sums[4]+n/m*n^2*Phi(m);
+        sums[5]:=sums[5]+4*n/m*n^2*Phi(m);
+    fi;
+    return 1/(24*n^3)*Sum(sums);
+
+end;
